@@ -18,6 +18,7 @@ body {
   resize: none; /* Prevent manual resizing */
   overflow-y: hidden; /* No scrollbar */
   line-height: 1.5;
+  display: block; /* Ensure block behavior */
 }
 
 .textarea-scroll {
@@ -30,18 +31,4 @@ body {
   resize: none;
   overflow-y: auto; /* Allow scrollbar when needed */
   line-height: 1.5;
-}
-
-
-#expandingTextarea {
-  width: 100%;
-  min-height: 30px; /* Initial height (1 line) */
-  max-height: 60px; /* Expand to 2 lines only */
-  padding: 8px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  resize: none; /* Prevent manual resizing */
-  overflow: hidden; /* Hide scrollbar initially */
-  line-height: 1.5; /* Adjust based on your font */
 }
