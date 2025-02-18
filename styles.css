@@ -3,11 +3,32 @@ body {
   width: 320px;
   padding: 10px;
 }
-.input-container {
+
+.apikey-container{
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
+
+.apikey-area{
+  width: 100%;
+  min-height: 30px;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow-y: hidden; /* No scrollbar */
+  line-height: 1.5;
+  display: block;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  display: none;
+}
+
 .textarea-expand {
   width: 100%;
   min-height: 30px; /* Start with 1 line */
