@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "ChatGpt Chrome Extension",
+  "description": "Chat completion extension for chrome extension",
+  "version": "1.0",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["popup.js"]
+    }
+  ]
+}
