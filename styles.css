@@ -1,7 +1,14 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   font-family: Arial, sans-serif;
-  width: 320px;
-  padding: 10px;
+  width: 320px; /* Suitable width for Chrome extension popup */
+  padding: 15px;
+  background-color: #f8f9fa;
 }
 
 .apikey-container{
@@ -14,6 +21,7 @@ body {
   width: 100%;
   min-height: 30px;
   padding: 8px;
+  padding-right: 8px;
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -26,30 +34,30 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  display: none;
 }
 
 .textarea-expand {
   width: 100%;
-  min-height: 30px; /* Start with 1 line */
-  padding: 8px;
+  min-height: 30px; /* Start small */
+  padding: 10px;
   font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  resize: none; /* Prevent manual resizing */
-  overflow-y: hidden; /* No scrollbar */
+  border: 2px solid #007bff;
+  border-radius: 6px;
+  resize: none; /* No manual resize */
+  overflow-y: hidden; /* Expands instead of scrolling */
   line-height: 1.5;
-  display: block; /* Ensure block behavior */
+  transition: border-color 0.2s ease-in-out;
 }
 
 .textarea-scroll {
   width: 100%;
-  height: 100px; /* Fixed height */
-  padding: 8px;
+  height: 120px; /* Fixed height */
+  padding: 10px;
   font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 2px solid #28a745;
+  border-radius: 6px;
   resize: none;
-  overflow-y: auto; /* Allow scrollbar when needed */
+  overflow-y: auto; /* Scrollbar when text overflows */
   line-height: 1.5;
+  transition: border-color 0.2s ease-in-out;
 }
