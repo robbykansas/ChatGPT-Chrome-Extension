@@ -1,3 +1,21 @@
+const chromeStorageSet = (key, value) => {
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.set({[key]: value}, _ => {
+      console.log("saved, <<<<<<")
+      resolve()
+    })
+  })
+};
+
+const chromeStorageGet = (key) => {
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.get(key, result => {
+      console.log(result, "got result")
+      resolve(result)
+    })
+  })
+}
+
 const chatGpt = async (textContent) => {
   console.log(textContent)
   let model = "gpt-4o-mini"
@@ -8,7 +26,7 @@ const chatGpt = async (textContent) => {
         content: textContent,
     },
   ]
-  const apikey = ""
+  const apikey = "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"
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -29,13 +47,35 @@ const chatGpt = async (textContent) => {
   return data.choices[0].message.content
 }
 
-window.onload = async function () {
+document.addEventListener("DOMContentLoaded", async function () {
+  const apiKeyContainer = document.getElementById("apikey-container")
+  const inputContainer = document.getElementById("input-container")
+  const apiKeyArea = document.querySelector(".apikey-area")
   const expandTextarea = document.querySelector(".textarea-expand");
   const scrollTextarea = document.querySelector(".textarea-scroll");
+  chrome.storage.local.clear(_ => {
+    console.log("delete key")
+  })
+  if (!apiKeyContainer || !inputContainer) {
+    console.log("none")
+  }
 
-  if (!expandTextarea || !scrollTextarea) {
-      console.error("Textarea elements not found. Check your HTML class names.");
-      return;
+  apiKeyArea.addEventListener("keydown", async function (event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault()
+      await chromeStorageSet('key', apiKeyArea.value)
+      apiKeyContainer.style.display = "none"
+      inputContainer.style.display = "block"
+    }
+  })
+
+  const apikey = await chromeStorageGet('key')
+  if (apikey.key != undefined) {
+    apiKeyContainer.style.display = "none"
+    inputContainer.style.display = "block"
+  } else {
+    apiKeyContainer.style.display = "block"
+    inputContainer.style.display = "none"
   }
 
   expandTextarea.addEventListener("keydown", async function (event) {
@@ -52,4 +92,4 @@ window.onload = async function () {
       this.style.height = "auto";
       this.style.height = this.scrollHeight + "px"; // Auto-expand
   });
-};
+});
