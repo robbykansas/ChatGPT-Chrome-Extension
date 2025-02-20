@@ -47,15 +47,18 @@ const chatGpt = async (textContent) => {
   return data.choices[0].message.content
 }
 
+const exitChatGPT = () => {
+  chrome.storage.local.clear(_ => {
+    console.log("delete key")
+  })
+}
+
 document.addEventListener("DOMContentLoaded", async function () {
   const apiKeyContainer = document.getElementById("apikey-container")
   const inputContainer = document.getElementById("input-container")
   const apiKeyArea = document.querySelector(".apikey-area")
   const expandTextarea = document.querySelector(".textarea-expand");
   const scrollTextarea = document.querySelector(".textarea-scroll");
-  chrome.storage.local.clear(_ => {
-    console.log("delete key")
-  })
   if (!apiKeyContainer || !inputContainer) {
     console.log("none")
   }
