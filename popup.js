@@ -16,8 +16,8 @@ const chromeStorageGet = (key) => {
   })
 }
 
-const chatGpt = async (textContent) => {
-  console.log(textContent)
+const chatGpt = async (textContent, apikey) => {
+  console.log(apikey.key, "<<<<")
   let model = "gpt-4o-mini"
   let message = [
     { role: "system", content: "You are a helpful assistant." },
@@ -26,13 +26,12 @@ const chatGpt = async (textContent) => {
         content: textContent,
     },
   ]
-  const apikey = "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"
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${apikey}`
+      "Authorization": `Bearer ${apikey.key}`
     },
     body: JSON.stringify({
       model: model,
@@ -41,10 +40,7 @@ const chatGpt = async (textContent) => {
     })
   })
 
-  const data = await res.json();
-
-  console.log(data.choices[0].message.content)
-  return data.choices[0].message.content
+  return res.json()
 }
 
 const exitChatGPT = () => {
@@ -84,8 +80,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   expandTextarea.addEventListener("keydown", async function (event) {
       if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault(); // Prevent new line
-          const res = await chatGpt(expandTextarea.value)
-          scrollTextarea.value += res; // Append text
+          const res = await chatGpt(expandTextarea.value, apikey)
+          scrollTextarea.value = res.choices[0].message.content; // Append text
           expandTextarea.value = ""; // Clear input field
           expandTextarea.style.height = "30px"; // Reset height
       }
