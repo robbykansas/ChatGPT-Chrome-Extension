@@ -1,0 +1,19 @@
+{
+  "dependencies": {
+    "@types/chrome": "^0.0.306",
+    "openai": "^4.86.1"
+  },
+  "name": "tsc",
+  "version": "1.0.0",
+  "description": "chatGpt Chrome Extension",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^1.0.14",
+    "vite": "^6.2.0"
+  }
+}
