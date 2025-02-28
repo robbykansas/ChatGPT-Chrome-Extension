@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChatGPT Chrome Extension UI</title>
-    <script type="module" src="popup.js"></script>
+    <script type="module" src="popup.ts"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,9 +12,9 @@
         <input type="password" class="apikey-area" placeholder="Enter OpenAi api key here..." >
     </div>
     <div id="input-container" style="display: none;">
-        <textarea class="textarea-expand" placeholder="Enter text here..."></textarea>
-        <textarea class="textarea-scroll" placeholder="Enter long text here..."></textarea>
-        <button onclick="exitChatGPT()"> Exit </button>
+        <textarea class="textarea-expand" placeholder="Ask anything"></textarea>
+        <textarea class="textarea-scroll" readonly></textarea>
+        <!-- <button onclick="exitChatGPT()"> Exit </button> -->
     </div>
 </body>
 </html>
