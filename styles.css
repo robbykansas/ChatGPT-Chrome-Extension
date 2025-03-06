@@ -30,6 +30,24 @@ body {
   display: block;
 }
 
+.chat-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.user-message {
+  background-color: #0A84FF;
+  align-self: flex-end;
+  text-align: right;
+}
+
+.bot-message {
+  background-color: #444654;
+  align-self: flex-start;
+}
+
 .input-container {
   display: flex;
   flex-direction: column;
