@@ -3,10 +3,11 @@ import {OpenAI} from "openai";
 class OpenAICompletions {
   private openai: OpenAI | null = null;
   private apiKeyContainer: HTMLElement | null = null;
+  private chatContainer: HTMLElement | null = null;
   private inputContainer: HTMLElement | null = null;
   private apiKeyArea: HTMLTextAreaElement | null = null;
-  private inputTextArea: HTMLTextAreaElement | null = null
-  private outputTextArea: HTMLTextAreaElement | null = null
+  private inputTextArea: HTMLTextAreaElement | null = null;
+  private outputTextArea: HTMLTextAreaElement | null = null;
 
   constructor() {
     document.addEventListener("DOMContentLoaded", () => {
@@ -26,9 +27,11 @@ class OpenAICompletions {
   private async init() {
     this.apiKeyContainer = document.getElementById("apikey-container")
     this.inputContainer = document.getElementById("input-container")
+    this.chatContainer = document.getElementById("chat-container")
     this.apiKeyArea = document.querySelector(".apikey-area") as HTMLTextAreaElement
     this.inputTextArea = document.querySelector(".textarea-expand") as HTMLTextAreaElement
     this.outputTextArea = document.querySelector(".textarea-scroll") as HTMLTextAreaElement
+    this.loadHistory()
     if (this.apiKeyArea) {
       this.apiKeyArea.addEventListener("keydown", (event) => this.handleApiKey(event))
     }
@@ -43,6 +46,14 @@ class OpenAICompletions {
           this.style.height = this.scrollHeight + "px"; // Auto-expand
       });
     }
+  }
+
+  private appendMessage(sender: "user" | "bot", text: string): void {
+    const messageDiv = document.createElement("div");
+    messageDiv.classList.add("message", sender === "user" ? "user-message" : "bot-message");
+    messageDiv.textContent = text;
+    this.chatContainer.appendChild(messageDiv);
+    this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
   }
 
   private async handleApiKey(event: KeyboardEvent) {
@@ -61,11 +72,14 @@ class OpenAICompletions {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault()
       const chatGptInput = this.inputTextArea?.value
-      if (chatGptInput && this.inputTextArea instanceof HTMLTextAreaElement && this.outputTextArea instanceof HTMLTextAreaElement) {
+      if (chatGptInput && this.inputTextArea instanceof HTMLTextAreaElement) {
         const res = await this.chatGpt(chatGptInput)
-        this.outputTextArea.value = res; // Append text
+        this.appendMessage("user", chatGptInput)
+        this.appendMessage("bot", res)
+        // this.outputTextArea.value = res; // Append text
         this.inputTextArea.value = ""; // Clear input field
         this.inputTextArea.style.height = "30px"; // Reset height
+        this.saveHistory()
       }
     }
   }
@@ -84,6 +98,19 @@ class OpenAICompletions {
       }
     }
   }
+
+  
+private saveHistory(): void {
+  chrome.storage.local.set({ chatHistory: this.chatContainer.innerHTML });
+}
+
+private loadHistory(): void {
+  chrome.storage.local.get("chatHistory", (data) => {
+      if (data.chatHistory) {
+          this.chatContainer.innerHTML = data.chatHistory;
+      }
+  });
+}
 
   private async chromeStorageSet(key: string, value: string): Promise<void> {
     return new Promise<void>(resolve => {
