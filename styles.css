@@ -38,14 +38,28 @@ body {
 }
 
 .user-message {
+  width: 100%;
+  min-height: 30px;
+  padding: 8px;
+  padding-right: 8px;
+  font-size: 14px;
   background-color: #0A84FF;
   align-self: flex-end;
   text-align: right;
+  line-height: 1.5;
+  display: block;
 }
 
 .bot-message {
+  width: 100%;
+  min-height: 30px;
+  padding: 8px;
+  padding-right: 8px;
+  font-size: 14px;
   background-color: #444654;
   align-self: flex-start;
+  line-height: 1.5;
+  display: block;
 }
 
 .input-container {
