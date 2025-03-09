@@ -41,10 +41,10 @@ class OpenAICompletions {
     if (this.inputTextArea) {
       this.inputTextArea.addEventListener("keydown", (event) => this.handleChatGpt(event));
 
-      this.outputTextArea.addEventListener("input", function () {
-          this.style.height = "auto";
-          this.style.height = this.scrollHeight + "px"; // Auto-expand
-      });
+      // this.outputTextArea.addEventListener("input", function () {
+      //     this.style.height = "auto";
+      //     this.style.height = this.scrollHeight + "px"; // Auto-expand
+      // });
     }
   }
 
