@@ -85,6 +85,35 @@ class OpenAICompletions {
     }
   }
 
+  /**
+   * Converts markdown text to HTML.
+   *
+   * This function takes a string of markdown text as input and converts it to HTML.
+   * It supports various markdown syntax elements such as headers, code blocks, inline code, bold, italic, and new lines.
+   *
+   * @param text - The markdown text to be converted to HTML.
+   * @returns The HTML representation of the input markdown text.
+   *
+   * @remarks
+   * The function uses regular expressions to match and replace the markdown syntax elements with their corresponding HTML tags.
+   * The supported markdown syntax elements and their corresponding HTML tags are as follows:
+   * - Headers:
+   *   - ### Header 3: `### (.*?)(\n|$)` -> `<h3>$1</h3>`
+   *   - ## Header 2: `## (.*?)(\n|$)` -> `<h2>$1</h2>`
+   *   - # Header 1: `# (.*?)(\n|$)` -> `<h1>$1</h1>`
+   * - Code blocks:
+   *   - ```code```: ````([\s\S]+?)```` -> `<pre><code>$1</code></pre>`
+   * - Inline code:
+   *   - `code`: ```(`([^`]+)`)``` -> `<code>$1</code>`
+   * - Bold:
+   *   - **bold**: `\*\*(.*?)\*\*` -> `<b>$1</b>`
+   *   - __bold__: `__(.*?)__` -> `<b>$1</b>`
+   * - Italic:
+   *   - *italic*: `\*(.*?)\*` -> `<i>$1</i>`
+   *   - _italic_: `_(.*?)_` -> `<i>$1</i>`
+   * - New lines:
+   *   - New line: `\n` -> `<br>`
+   */
   private markdownToHTML(text: string): string {
     return text
     .replace(/### (.*?)(\n|$)/g, '<h3>$1</h3>') // H3 Headers
@@ -99,6 +128,20 @@ class OpenAICompletions {
     .replace(/\n/g, "<br>"); // New lines
   }
 
+  /**
+   * Handles the user input for chat messages and sends them to the OpenAI model for processing.
+   *
+   * @remarks
+   * This function is called when the user presses the Enter key while focused on the chat input area.
+   * It retrieves the user's input, validates it, and sends it to the OpenAI model for processing.
+   * If the OpenAI instance is not already initialized, it retrieves the API key from storage and initializes the instance.
+   * The function then adds a loading indicator to the input area, sends the user's message to the chatGpt function,
+   * appends the user's and bot's messages to the chat container, clears the input field, resets the input area's height,
+   * and saves the chat history to storage.
+   *
+   * @param event - The keyboard event that triggered this function.
+   * @returns {Promise<void>} - A promise that resolves when the chat handling process is complete.
+   */
   private async handleChatGpt(event: KeyboardEvent) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault()
@@ -108,16 +151,25 @@ class OpenAICompletions {
           const apiKey = await this.chromeStorageGet('key');
           this.openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true }); // Initialize OpenAI instance if not already initialized
         }
-        const res = await this.chatGpt(chatGptInput)
         this.appendMessage("user", chatGptInput)
-        this.appendMessage("bot", res)
         this.inputTextArea.value = ""; // Clear input field
-        this.inputTextArea.style.height = "30px"; // Reset height
+        const res = await this.chatGpt(chatGptInput)
+        this.appendMessage("bot", res)
         this.saveHistory()
       }
     }
   }
 
+  /**
+   * Sets the display of the API key and chat input containers based on the availability of the API key.
+   *
+   * @remarks
+   * This function retrieves the API key from storage using the `chromeStorageGet` method.
+   * If the API key is not available, it displays the API key input container and hides the chat input container.
+   * If the API key is available, it hides the API key input container and displays the chat input container.
+   *
+   * @returns {Promise<void>} - A promise that resolves when the container display process is complete.
+   */
   private async setContainer() {
     const apiKey = await this.chromeStorageGet('key')
     if (!apiKey) {
@@ -132,12 +184,33 @@ class OpenAICompletions {
       }
     }
   }
-
-  
+/**
+ * Saves the current chat history to the Chrome local storage.
+ *
+ * This function retrieves the innerHTML of the chat container and saves it to the Chrome local storage under the key "chatHistory".
+ * It is called whenever the chat history needs to be saved, such as after a new message is sent or received.
+ *
+ * @remarks
+ * The chat history is saved as a string in the "chatHistory" key of the Chrome local storage.
+ * This allows the chat history to persist across browser sessions and be retrieved when the extension is reopened.
+ *
+ * @returns {void} - This function does not return any value.
+ */
 private saveHistory(): void {
   chrome.storage.local.set({ chatHistory: this.chatContainer.innerHTML });
 }
 
+/**
+ * Loads the chat history from the Chrome local storage and appends it to the chat container.
+ *
+ * @remarks
+ * This function retrieves the chat history stored in the Chrome local storage under the key "chatHistory".
+ * If the chat history is available, it appends it to the chat container by updating the `innerHTML` property.
+ * If the chat history is not available (i.e., the "chatHistory" key is not present in the local storage),
+ * no action is taken.
+ *
+ * @returns {void} - This function does not return any value.
+ */
 private loadHistory(): void {
   chrome.storage.local.get("chatHistory", (data) => {
       if (data.chatHistory) {
@@ -146,6 +219,18 @@ private loadHistory(): void {
   });
 }
 
+  /**
+   * Sets a value in the Chrome local storage using the provided key and value.
+   *
+   * @remarks
+   * This function uses the `chrome.storage.local.set` method to store the provided key-value pair in the Chrome local storage.
+   * It returns a promise that resolves when the storage operation is complete.
+   *
+   * @param key - The key under which the value will be stored in the Chrome local storage.
+   * @param value - The value to be stored in the Chrome local storage.
+   *
+   * @returns {Promise<void>} - A promise that resolves when the storage operation is complete.
+   */
   private async chromeStorageSet(key: string, value: string): Promise<void> {
     return new Promise<void>(resolve => {
       chrome.storage.local.set({[key]: value}, () => {
@@ -153,7 +238,19 @@ private loadHistory(): void {
       })
     })
   };
-  
+
+  /**
+   * Retrieves a value from the Chrome local storage using the provided key.
+   *
+   * @remarks
+   * This function uses the `chrome.storage.local.get` method to retrieve the value associated with the given key from the Chrome local storage.
+   * It returns a promise that resolves with the retrieved value.
+   * If the specified key is not found in the local storage, the promise will resolve with `undefined`.
+   *
+   * @param key - The key under which the value is stored in the Chrome local storage.
+   *
+   * @returns {Promise<string>} - A promise that resolves with the retrieved value.
+   */
   private async chromeStorageGet(key: string): Promise<string> {
     return new Promise<string>(resolve => {
       chrome.storage.local.get(key, result => {
@@ -183,10 +280,6 @@ private loadHistory(): void {
     })
 
     return completions.choices[0].message.content || "No response from openai"
-  }
-  
-  private exitChatGPT(): void {
-    chrome.storage.local.clear(() => {})
   }
 }
 
