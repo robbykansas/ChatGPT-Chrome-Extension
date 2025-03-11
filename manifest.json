@@ -8,8 +8,5 @@
   ],
   "action": {
     "default_popup": "popup.html"
-  },
-  "chrome_url_overrides": {
-    "newtab": "popup.html"
   }
 }
