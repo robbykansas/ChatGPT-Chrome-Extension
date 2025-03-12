@@ -1,0 +1,1 @@
+export const ASSISTANT_PROMPT = `You are a helpful assistant.`
