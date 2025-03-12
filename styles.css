@@ -99,3 +99,37 @@ body {
   line-height: 1.5;
   transition: border-color 0.2s ease-in-out;
 }
+
+.select-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.select-container select {
+  width: 100%;
+  min-height: 15px; /* Start small */
+  padding: 10px;
+  font-size: 14px;
+  border: 2px solid rgba(0, 0, 0, 0.7);
+  border-radius: 6px;
+  line-height: 1.5;
+  transition: border-color 0.2s ease-in-out;
+  background-size: 16px 16px;
+}
+
+pre {
+  background: black;
+  padding: 10px;
+  border-radius: 6px;
+  overflow-x: auto; /* Allow horizontal scrolling */
+  white-space: pre-wrap; /* Wrap long lines */
+  word-wrap: break-word; /* Break long words */
+}
+
+code {
+  font-family: monospace;
+  background: black;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
