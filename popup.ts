@@ -1,12 +1,19 @@
-import {OpenAI} from "openai";
+import { ASSISTANT_PROMPT } from "./constant/assistantPrompt";
+import { CODING_PROMPT } from "./constant/codingPrompts";
+import { CODEWARS_PROMPT } from "./constant/codewarsPrompts";
+import { generateText } from "ai";
+import { createOpenAI, OpenAIProvider } from "@ai-sdk/openai";
 
 class OpenAICompletions {
-  private openai: OpenAI | null = null;
+  private openai: OpenAIProvider | null = null;
   private apiKeyContainer: HTMLElement | null = null;
   private chatContainer: HTMLElement | null = null;
   private inputContainer: HTMLElement | null = null;
+  private selectContainer: HTMLDivElement | null = null;
   private apiKeyArea: HTMLTextAreaElement | null = null;
   private inputTextArea: HTMLTextAreaElement | null = null;
+  private gptModel: HTMLSelectElement | null = null;
+  private gptContext: HTMLSelectElement | null = null;
 
   constructor() {
     document.addEventListener("DOMContentLoaded", () => {
@@ -27,8 +34,12 @@ class OpenAICompletions {
     this.apiKeyContainer = document.getElementById("apikey-container")
     this.inputContainer = document.getElementById("input-container")
     this.chatContainer = document.getElementById("chat-container")
+    this.selectContainer = document.querySelector(".select-container") as HTMLDivElement
     this.apiKeyArea = document.querySelector(".apikey-area") as HTMLTextAreaElement
     this.inputTextArea = document.querySelector(".textarea-expand") as HTMLTextAreaElement
+    this.gptModel = document.querySelector("#gpt-model")
+    this.gptContext = document.querySelector("#gpt-context")
+
     this.loadHistory()
     if (this.apiKeyArea) {
       this.apiKeyArea.addEventListener("keydown", (event) => this.handleApiKey(event))
@@ -58,6 +69,7 @@ class OpenAICompletions {
     const messageDiv = document.createElement("div");
     messageDiv.classList.add("message", sender === "user" ? "user-message" : "bot-message");
     messageDiv.innerHTML = this.markdownToHTML(text);
+    console.log(messageDiv, "<<<<<<<<<<<<<<<")
     this.chatContainer.appendChild(messageDiv);
     this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
   }
@@ -78,9 +90,9 @@ class OpenAICompletions {
       const apiKeyValue = this.apiKeyArea?.value
       if (apiKeyValue && this.apiKeyContainer instanceof HTMLElement && this.inputContainer instanceof HTMLElement) {
         await this.chromeStorageSet('key', apiKeyValue)
-        this.openai = new OpenAI({ apiKey: apiKeyValue, dangerouslyAllowBrowser: true }); // Initialize OpenAI instance
         this.apiKeyContainer.style.display = "none"
         this.inputContainer.style.display = "block"
+        this.selectContainer.style.display = "flex"
       }
     }
   }
@@ -115,17 +127,35 @@ class OpenAICompletions {
    *   - New line: `\n` -> `<br>`
    */
   private markdownToHTML(text: string): string {
-    return text
-    .replace(/### (.*?)(\n|$)/g, '<h3>$1</h3>') // H3 Headers
-    .replace(/## (.*?)(\n|$)/g, '<h2>$1</h2>')  // H2 Headers
-    .replace(/# (.*?)(\n|$)/g, '<h1>$1</h1>')   // H1 Headers
-    .replace(/```([\s\S]+?)```/g, '<pre><code>$1</code></pre>') // Code blocks
-    .replace(/`([^`]+)`/g, '<code>$1</code>') // Inline code
-    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // Bold
-    .replace(/\*(.*?)\*/g, '<i>$1</i>') // Italic
-    .replace(/__(.*?)__/g, '<b>$1</b>') // Bold (alternative)
-    .replace(/_(.*?)_/g, '<i>$1</i>') // Italic (alternative)
-    .replace(/\n/g, "<br>"); // New lines
+    const codeBlockPlaceholder = 'codeBlockPlaceholder';
+    const codeBlocks: string[] = [];
+    text = text.replace(/```([\s\S]+?)```/g, (match, p1) => {
+      codeBlocks.push(`<pre><code>${this.escapeHTML(p1)}</code></pre>`);
+      return codeBlockPlaceholder;
+    });
+
+    text = text
+      .replace(/### (.*?)(\n|$)/g, '<h3>$1</h3>') // H3 Headers
+      .replace(/## (.*?)(\n|$)/g, '<h2>$1</h2>')  // H2 Headers
+      .replace(/# (.*?)(\n|$)/g, '<h1>$1</h1>')   // H1 Headers
+      .replace(/`([^`]+)`/g, '<code>$1</code>') // Inline code
+      .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // Bold
+      .replace(/\*(.*?)\*/g, '<i>$1</i>') // Italic
+      .replace(/__(.*?)__/g, '<b>$1</b>') // Bold (alternative)
+      .replace(/_(.*?)_/g, '<i>$1</i>') // Italic (alternative)
+      .replace(/\n/g, "<br>"); // New lines
+
+    text = text.replace(new RegExp(codeBlockPlaceholder, 'g'), () => codeBlocks.shift() || '');
+
+    return text;
+  }
+
+  private escapeHTML(str: string): string {
+    return str.replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#039;");
   }
 
   /**
@@ -149,7 +179,10 @@ class OpenAICompletions {
       if (chatGptInput && this.inputTextArea instanceof HTMLTextAreaElement) {
         if (!this.openai) {
           const apiKey = await this.chromeStorageGet('key');
-          this.openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true }); // Initialize OpenAI instance if not already initialized
+          this.openai = await createOpenAI({
+            compatibility: "strict",
+            apiKey: apiKey,
+          })
         }
         this.appendMessage("user", chatGptInput)
         this.inputTextArea.value = ""; // Clear input field
@@ -176,11 +209,13 @@ class OpenAICompletions {
       if (this.apiKeyContainer instanceof HTMLElement && this.inputContainer instanceof HTMLElement) {
         this.apiKeyContainer.style.display = "block"
         this.inputContainer.style.display = "none"
+        this.selectContainer.style.display = "none"
       }
     } else {
       if (this.apiKeyContainer instanceof HTMLElement && this.inputContainer instanceof HTMLElement) {
         this.apiKeyContainer.style.display = "none"
         this.inputContainer.style.display = "block"
+        this.selectContainer.style.display = "flex"
       }
     }
   }
@@ -254,7 +289,6 @@ private loadHistory(): void {
   private async chromeStorageGet(key: string): Promise<string> {
     return new Promise<string>(resolve => {
       chrome.storage.local.get(key, result => {
-        this.openai = new OpenAI({apiKey: result.key, dangerouslyAllowBrowser: true})
         resolve(result.key)
       })
     })
@@ -265,21 +299,33 @@ private loadHistory(): void {
       return "Error: OpenAI missing"
     }
 
-    let model = "gpt-4o-mini"
-  
-    const completions = await this.openai.chat.completions.create({
-      model: model,
-      store: true,
+    const model = this.gptModel?.value || "gpt-4o-mini"
+    const context = this.gptContext?.value || "assistant"
+    let content = ""
+    switch(context) {
+      case "assistant":
+        content = ASSISTANT_PROMPT
+        break
+      case "coding":
+        content = CODING_PROMPT
+        break
+      case "codewars":
+        content = CODEWARS_PROMPT
+        break
+    }
+
+    const {text} = await generateText({
+      model: this.openai(model),
       messages: [
-        { role: "system", content: "You are a helpful assistant." },
+        { role: "system", content: content },
         {
-            role: "user",
-            content: textContent,
+          role: "user",
+          content: textContent,
         },
       ],
     })
 
-    return completions.choices[0].message.content || "No response from openai"
+    return text || "No response from openai"
   }
 }
 
