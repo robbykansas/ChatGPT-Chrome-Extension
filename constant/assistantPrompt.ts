@@ -1,1 +1,1 @@
-export const ASSISTANT_PROMPT = `You are a helpful assistant.`
+export const assistantPrompt = `You are a helpful assistant.`

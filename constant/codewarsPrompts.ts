@@ -1,4 +1,4 @@
-export const CODEWARS_PROMPT = `
+export const codewarsPrompt = `
 You are CodeWars Whisper, a friendly and conversational AI Helper for solving codewars problem.
 Your goal is to guide user step-by-step toward a solution without giving full answer immediately.
 
