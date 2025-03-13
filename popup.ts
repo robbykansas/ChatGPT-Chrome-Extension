@@ -1,8 +1,10 @@
-import { ASSISTANT_PROMPT } from "./constant/assistantPrompt";
-import { CODING_PROMPT } from "./constant/codingPrompts";
-import { CODEWARS_PROMPT } from "./constant/codewarsPrompts";
-import { generateText } from "ai";
+import { assistantPrompt } from "./constant/assistantPrompt";
+import { codingPrompt } from "./constant/codingPrompts";
+import { codewarsPrompt } from "./constant/codewarsPrompts";
+import { codewarsHints } from "./constant/codewarsHints";
+import { generateText, generateObject } from "ai";
 import { createOpenAI, OpenAIProvider } from "@ai-sdk/openai";
+import { outputSchema } from "./schema/output";
 
 class OpenAICompletions {
   private openai: OpenAIProvider | null = null;
@@ -69,7 +71,6 @@ class OpenAICompletions {
     const messageDiv = document.createElement("div");
     messageDiv.classList.add("message", sender === "user" ? "user-message" : "bot-message");
     messageDiv.innerHTML = this.markdownToHTML(text);
-    console.log(messageDiv, "<<<<<<<<<<<<<<<")
     this.chatContainer.appendChild(messageDiv);
     this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
   }
@@ -99,32 +100,12 @@ class OpenAICompletions {
 
   /**
    * Converts markdown text to HTML.
-   *
-   * This function takes a string of markdown text as input and converts it to HTML.
-   * It supports various markdown syntax elements such as headers, code blocks, inline code, bold, italic, and new lines.
-   *
-   * @param text - The markdown text to be converted to HTML.
-   * @returns The HTML representation of the input markdown text.
-   *
-   * @remarks
-   * The function uses regular expressions to match and replace the markdown syntax elements with their corresponding HTML tags.
-   * The supported markdown syntax elements and their corresponding HTML tags are as follows:
-   * - Headers:
-   *   - ### Header 3: `### (.*?)(\n|$)` -> `<h3>$1</h3>`
-   *   - ## Header 2: `## (.*?)(\n|$)` -> `<h2>$1</h2>`
-   *   - # Header 1: `# (.*?)(\n|$)` -> `<h1>$1</h1>`
-   * - Code blocks:
-   *   - ```code```: ````([\s\S]+?)```` -> `<pre><code>$1</code></pre>`
-   * - Inline code:
-   *   - `code`: ```(`([^`]+)`)``` -> `<code>$1</code>`
-   * - Bold:
-   *   - **bold**: `\*\*(.*?)\*\*` -> `<b>$1</b>`
-   *   - __bold__: `__(.*?)__` -> `<b>$1</b>`
-   * - Italic:
-   *   - *italic*: `\*(.*?)\*` -> `<i>$1</i>`
-   *   - _italic_: `_(.*?)_` -> `<i>$1</i>`
-   * - New lines:
-   *   - New line: `\n` -> `<br>`
+   * 
+   * This function takes a string of markdown-formatted text and converts it to HTML.
+   * It handles code blocks, headers, inline code, bold text, italic text, and line breaks.
+   * 
+   * @param text - The markdown-formatted text to be converted to HTML.
+   * @returns The input text converted to HTML format.
    */
   private markdownToHTML(text: string): string {
     const codeBlockPlaceholder = 'codeBlockPlaceholder';
@@ -293,6 +274,68 @@ private loadHistory(): void {
       })
     })
   }
+
+  private async codewarsContent(textContent: string): Promise<string> {
+    return new Promise<string>( resolve => {
+      chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+        const tab = tabs[0]
+        if (tab.url?.includes('codewars.com')) {
+          chrome.scripting.executeScript({
+            target: { tabId: tab.id! },
+            func: () => {
+              const scrapeDescription = document.querySelectorAll("#description p, #description pre code")
+              const description = Array.from(scrapeDescription)
+                .map(line => line.textContent || "")
+                .join("\n")
+              
+              const programmingLanguage = document.querySelectorAll("span.mr-4 > span")
+              const language = Array.from(programmingLanguage)
+                .map(lang => lang.textContent || "")
+                .join("\n")
+              
+              const firstCode = document.querySelector(".CodeMirror-code")
+              const userCode = firstCode.querySelectorAll(".CodeMirror-line")
+              const code = Array.from(userCode)
+                .map(line => line.textContent || "")
+                .join("\n")
+  
+              return { description, language, code }
+            }
+          }, async result => {
+            if (result) {
+              const { description, language, code } = result[0]?.result
+              const prompt = codewarsPrompt
+                .replace(/{{problem_statement}}/g, description)
+                .replace(/{{programming_language}}/g, language)
+                .replace(/{{user_code}}/g, code)
+
+              const model = this.gptModel?.value || "gpt-4o-mini"
+
+              const data = await generateObject({
+                model: this.openai(model),
+                schema: outputSchema,
+                output: 'object',
+                messages: [
+                  { role: "system", content: prompt },
+                  { role: "system", content: `extractedCode (this code is written by user): ${code}`},
+                  { role: "user", content: textContent },
+                ],
+              })
+
+              const res = codewarsHints
+                .replace(/{{feedback}}/g, data.object.feedback)
+                .replace(/{{hint1}}/g, data.object.hints[0])
+                .replace(/{{hint2}}/g, data.object.hints[1])
+              
+              resolve(res)
+            }
+          })
+        } else {
+          resolve("You must access codewars problem to use this feature.")
+        }
+      })
+    })
+  }
   
   private async chatGpt(textContent: string): Promise<string> {
     if (!this.openai) {
@@ -304,28 +347,36 @@ private loadHistory(): void {
     let content = ""
     switch(context) {
       case "assistant":
-        content = ASSISTANT_PROMPT
+        content = assistantPrompt
         break
       case "coding":
-        content = CODING_PROMPT
+        content = codingPrompt
         break
       case "codewars":
-        content = CODEWARS_PROMPT
+        content = codewarsPrompt
         break
     }
 
-    const {text} = await generateText({
-      model: this.openai(model),
-      messages: [
-        { role: "system", content: content },
-        {
-          role: "user",
-          content: textContent,
-        },
-      ],
-    })
+    let result = ""
 
-    return text || "No response from openai"
+    if (context != "codewars") {
+      const {text} = await generateText({
+        model: this.openai(model),
+        messages: [
+          { role: "system", content: content },
+          {
+            role: "user",
+            content: textContent,
+          },
+        ],
+      })
+
+      result = text
+    } else {
+      result = await this.codewarsContent(textContent)
+    }
+
+    return result || "No response from openai"
   }
 }
 
