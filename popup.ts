@@ -16,6 +16,7 @@ class OpenAICompletions {
   private inputTextArea: HTMLTextAreaElement | null = null;
   private gptModel: HTMLSelectElement | null = null;
   private gptContext: HTMLSelectElement | null = null;
+  private clearHistory: HTMLButtonElement | null = null;
 
   constructor() {
     document.addEventListener("DOMContentLoaded", () => {
@@ -41,10 +42,15 @@ class OpenAICompletions {
     this.inputTextArea = document.querySelector(".textarea-expand") as HTMLTextAreaElement
     this.gptModel = document.querySelector("#gpt-model")
     this.gptContext = document.querySelector("#gpt-context")
+    this.clearHistory = document.querySelector("#clear-history")
 
     this.loadHistory()
     if (this.apiKeyArea) {
       this.apiKeyArea.addEventListener("keydown", (event) => this.handleApiKey(event))
+    }
+
+    if (this.clearHistory) {
+      this.clearHistory.addEventListener("click", () =>  this.clearHistoryFunc());
     }
 
     this.setContainer()
@@ -214,6 +220,10 @@ class OpenAICompletions {
  */
 private saveHistory(): void {
   chrome.storage.local.set({ chatHistory: this.chatContainer.innerHTML });
+}
+
+private clearHistoryFunc(): void {
+  chrome.storage.local.remove('chatHistory');
 }
 
 /**
