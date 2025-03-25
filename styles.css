@@ -77,6 +77,7 @@ body {
 }
 
 .input-container {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -85,6 +86,8 @@ body {
   -webkit-backdrop-filter: blur(10px) saturate(180%);
   border-radius: 15px;
   padding: 10px;
+  border: 2px solid rgba(0, 0, 0, 0.7);
+  margin-bottom: 10px;
 }
 
 .textarea-expand {
@@ -92,7 +95,7 @@ body {
   min-height: 30px; /* Start small */
   padding: 10px;
   font-size: 14px;
-  border: 2px solid rgba(0, 0, 0, 0.7);
+  border: none;
   border-radius: 6px;
   resize: none; /* No manual resize */
   overflow-y: hidden; /* Expands instead of scrolling */
@@ -100,10 +103,25 @@ body {
   transition: border-color 0.2s ease-in-out;
 }
 
+.textarea-expand:focus {
+  outline: none;
+}
+
 .select-container {
   display: flex;
   gap: 10px;
   margin-bottom: 10px;
+}
+
+.clear-history {
+  padding: 5px;
+  font-size: 12px;
+  border: 2px solid rgba(0, 0, 0, 0.7);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  z-index: 2;
+  background-color: white;
 }
 
 .select-container select {
