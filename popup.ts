@@ -58,6 +58,27 @@ class OpenAICompletions {
     if (this.inputTextArea) {
       this.inputTextArea.addEventListener("keydown", (event) => this.handleChatGpt(event));
     }
+
+    this.checkCodewarsTab()
+  }
+
+  private async checkCodewarsTab(): Promise<void> {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tab = tabs[0];
+      const codewarsOption = document.querySelector("#gpt-context option[value='codewars']") as HTMLOptionElement;
+  
+      if (tab && tab.url && tab.url.includes("codewars.com")) {
+        // Enable the codewars option if the current tab is on codewars.com
+        if (codewarsOption) {
+          codewarsOption.disabled = false;
+        }
+      } else {
+        // Disable the codewars option if the current tab is not on codewars.com
+        if (codewarsOption) {
+          codewarsOption.disabled = true;
+        }
+      }
+    });
   }
 
   /**
