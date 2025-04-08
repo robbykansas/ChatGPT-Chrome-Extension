@@ -158,6 +158,12 @@ class OpenAICompletions {
     return text;
   }
 
+   /**
+   * Escapes special characters in a string to prevent XSS attacks when rendering HTML.//+
+   * //+
+   * @param str - The input string that needs to be escaped.//+
+   * @returns A new string with special characters replaced by their HTML entity equivalents.//+
+   */
   private escapeHTML(str: string): string {
     return str.replace(/&/g, "&amp;")
               .replace(/</g, "&lt;")
@@ -244,7 +250,9 @@ private saveHistory(): void {
 }
 
 private clearHistoryFunc(): void {
-  chrome.storage.local.remove('chatHistory');
+  chrome.storage.local.remove('chatHistory', () => {
+    location.reload()
+  });
 }
 
 /**
