@@ -53,11 +53,20 @@ class OpenAICompletions {
       this.clearHistory.addEventListener("click", () =>  this.clearHistoryFunc());
     }
 
+    if (this.gptContext) {
+      this.gptContext.addEventListener("change", () => {
+        const selectedContext = this.gptContext?.value;
+        chrome.storage.local.set({ selectedContext });
+      })
+    }
+
     this.setContainer()
 
     if (this.inputTextArea) {
       this.inputTextArea.addEventListener("keydown", (event) => this.handleChatGpt(event));
     }
+
+    this.loadSavedContext();
 
     this.checkCodewarsTab()
   }
@@ -76,7 +85,16 @@ class OpenAICompletions {
         // Disable the codewars option if the current tab is not on codewars.com
         if (codewarsOption) {
           codewarsOption.disabled = true;
+          this.gptContext.value = "assistant"
         }
+      }
+    });
+  }
+
+  private loadSavedContext(): void {
+    chrome.storage.local.get("selectedContext", (data) => {
+      if (data.selectedContext && this.gptContext) {
+        this.gptContext.value = data.selectedContext;
       }
     });
   }
