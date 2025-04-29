@@ -60,6 +60,13 @@ class OpenAICompletions {
       })
     }
 
+    if (this.gptModel) {
+      this.gptModel.addEventListener("change", () => {
+        const selectedModel = this.gptModel?.value;
+        chrome.storage.local.set({ selectedModel });
+      })
+    }
+
     this.setContainer()
 
     if (this.inputTextArea) {
@@ -95,6 +102,12 @@ class OpenAICompletions {
     chrome.storage.local.get("selectedContext", (data) => {
       if (data.selectedContext && this.gptContext) {
         this.gptContext.value = data.selectedContext;
+      }
+    });
+
+    chrome.storage.local.get("selectedModel", (data) => {
+      if (data.selectedModel && this.gptModel) {
+        this.gptModel.value = data.selectedModel;
       }
     });
   }
