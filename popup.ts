@@ -1,3 +1,4 @@
+import { Storage } from "./storage";
 import { assistantPrompt } from "./constant/assistantPrompt";
 import { codingPrompt } from "./constant/codingPrompts";
 import { codewarsPrompt } from "./constant/codewarsPrompts";
@@ -17,6 +18,7 @@ class OpenAICompletions {
   private gptModel: HTMLSelectElement | null = null;
   private gptContext: HTMLSelectElement | null = null;
   private clearHistory: HTMLButtonElement | null = null;
+  private storage: Storage | null = null;
 
   constructor() {
     document.addEventListener("DOMContentLoaded", () => {
@@ -43,14 +45,15 @@ class OpenAICompletions {
     this.gptModel = document.querySelector("#gpt-model")
     this.gptContext = document.querySelector("#gpt-context")
     this.clearHistory = document.querySelector("#clear-history")
+    this.storage = new Storage()
 
-    this.loadHistory()
+    this.storage.loadHistory()
     if (this.apiKeyArea) {
       this.apiKeyArea.addEventListener("keydown", (event) => this.handleApiKey(event))
     }
 
     if (this.clearHistory) {
-      this.clearHistory.addEventListener("click", () =>  this.clearHistoryFunc());
+      this.clearHistory.addEventListener("click", () =>  this.storage.clearHistoryFunc());
     }
 
     if (this.gptContext) {
@@ -73,7 +76,7 @@ class OpenAICompletions {
       this.inputTextArea.addEventListener("keydown", (event) => this.handleChatGpt(event));
     }
 
-    this.loadSavedContext();
+    this.storage.loadSavedContext();
 
     this.checkCodewarsTab()
   }
@@ -94,20 +97,6 @@ class OpenAICompletions {
           codewarsOption.disabled = true;
           this.gptContext.value = "assistant"
         }
-      }
-    });
-  }
-
-  private loadSavedContext(): void {
-    chrome.storage.local.get("selectedContext", (data) => {
-      if (data.selectedContext && this.gptContext) {
-        this.gptContext.value = data.selectedContext;
-      }
-    });
-
-    chrome.storage.local.get("selectedModel", (data) => {
-      if (data.selectedModel && this.gptModel) {
-        this.gptModel.value = data.selectedModel;
       }
     });
   }
@@ -148,7 +137,7 @@ class OpenAICompletions {
     if (event.key === "Enter" && !event.shiftKey) {
       const apiKeyValue = this.apiKeyArea?.value
       if (apiKeyValue && this.apiKeyContainer instanceof HTMLElement && this.inputContainer instanceof HTMLElement) {
-        await this.chromeStorageSet('key', apiKeyValue)
+        await this.storage.chromeStorageSet('key', apiKeyValue)
         this.apiKeyContainer.style.display = "none"
         this.inputContainer.style.display = "block"
         this.selectContainer.style.display = "flex"
@@ -223,7 +212,7 @@ class OpenAICompletions {
       const chatGptInput = this.inputTextArea?.value
       if (chatGptInput && this.inputTextArea instanceof HTMLTextAreaElement) {
         if (!this.openai) {
-          const apiKey = await this.chromeStorageGet('key');
+          const apiKey = await this.storage.chromeStorageGet('key');
           this.openai = await createOpenAI({
             compatibility: "strict",
             apiKey: apiKey,
@@ -233,7 +222,7 @@ class OpenAICompletions {
         this.inputTextArea.value = ""; // Clear input field
         const res = await this.chatGpt(chatGptInput)
         this.appendMessage("bot", res)
-        this.saveHistory()
+        this.storage.saveHistory()
       }
     }
   }
@@ -249,7 +238,7 @@ class OpenAICompletions {
    * @returns {Promise<void>} - A promise that resolves when the container display process is complete.
    */
   private async setContainer() {
-    const apiKey = await this.chromeStorageGet('key')
+    const apiKey = await this.storage.chromeStorageGet('key')
     if (!apiKey) {
       if (this.apiKeyContainer instanceof HTMLElement && this.inputContainer instanceof HTMLElement) {
         this.apiKeyContainer.style.display = "block"
@@ -263,86 +252,6 @@ class OpenAICompletions {
         this.selectContainer.style.display = "flex"
       }
     }
-  }
-/**
- * Saves the current chat history to the Chrome local storage.
- *
- * This function retrieves the innerHTML of the chat container and saves it to the Chrome local storage under the key "chatHistory".
- * It is called whenever the chat history needs to be saved, such as after a new message is sent or received.
- *
- * @remarks
- * The chat history is saved as a string in the "chatHistory" key of the Chrome local storage.
- * This allows the chat history to persist across browser sessions and be retrieved when the extension is reopened.
- *
- * @returns {void} - This function does not return any value.
- */
-private saveHistory(): void {
-  chrome.storage.local.set({ chatHistory: this.chatContainer.innerHTML });
-}
-
-private clearHistoryFunc(): void {
-  chrome.storage.local.remove('chatHistory', () => {
-    location.reload()
-  });
-}
-
-/**
- * Loads the chat history from the Chrome local storage and appends it to the chat container.
- *
- * @remarks
- * This function retrieves the chat history stored in the Chrome local storage under the key "chatHistory".
- * If the chat history is available, it appends it to the chat container by updating the `innerHTML` property.
- * If the chat history is not available (i.e., the "chatHistory" key is not present in the local storage),
- * no action is taken.
- *
- * @returns {void} - This function does not return any value.
- */
-private loadHistory(): void {
-  chrome.storage.local.get("chatHistory", (data) => {
-      if (data.chatHistory) {
-          this.chatContainer.innerHTML = data.chatHistory;
-      }
-  });
-}
-
-  /**
-   * Sets a value in the Chrome local storage using the provided key and value.
-   *
-   * @remarks
-   * This function uses the `chrome.storage.local.set` method to store the provided key-value pair in the Chrome local storage.
-   * It returns a promise that resolves when the storage operation is complete.
-   *
-   * @param key - The key under which the value will be stored in the Chrome local storage.
-   * @param value - The value to be stored in the Chrome local storage.
-   *
-   * @returns {Promise<void>} - A promise that resolves when the storage operation is complete.
-   */
-  private async chromeStorageSet(key: string, value: string): Promise<void> {
-    return new Promise<void>(resolve => {
-      chrome.storage.local.set({[key]: value}, () => {
-        resolve()
-      })
-    })
-  };
-
-  /**
-   * Retrieves a value from the Chrome local storage using the provided key.
-   *
-   * @remarks
-   * This function uses the `chrome.storage.local.get` method to retrieve the value associated with the given key from the Chrome local storage.
-   * It returns a promise that resolves with the retrieved value.
-   * If the specified key is not found in the local storage, the promise will resolve with `undefined`.
-   *
-   * @param key - The key under which the value is stored in the Chrome local storage.
-   *
-   * @returns {Promise<string>} - A promise that resolves with the retrieved value.
-   */
-  private async chromeStorageGet(key: string): Promise<string> {
-    return new Promise<string>(resolve => {
-      chrome.storage.local.get(key, result => {
-        resolve(result.key)
-      })
-    })
   }
 
   private async codewarsContent(textContent: string): Promise<string> {
