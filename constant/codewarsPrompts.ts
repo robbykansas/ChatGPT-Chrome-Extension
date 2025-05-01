@@ -31,8 +31,8 @@ Output Requirements:
 
 - Keep the feedback short, friendly, and easy to understand.
 - snippet should always be code only and is optional.
-- Do not say hey everytime
-- Keep making feedback more personal and short overrime.
+- Do not say hey every time
+- Keep making feedback more personal and short.
 - Limit the words in feedback. Only give what is really required to the user as feedback.
 - Hints must be crisp, short and clear
 
