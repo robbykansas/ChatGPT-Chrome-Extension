@@ -1,16 +1,9 @@
 import { Storage } from "./storage";
-import { assistantPrompt } from "./constant/assistantPrompt";
-import { codingPrompt } from "./constant/codingPrompts";
-import { codewarsPrompt } from "./constant/codewarsPrompts";
-import { codewarsHints } from "./constant/codewarsHints";
-import { generateText, generateObject } from "ai";
-import { createOpenAI, OpenAIProvider } from "@ai-sdk/openai";
-import { outputSchema } from "./schema/output";
+import { Codewars } from "./codewars";
+import { OpenAIModel } from "./openai";
 
 class OpenAICompletions {
-  private openai: OpenAIProvider | null = null;
   private apiKeyContainer: HTMLElement | null = null;
-  private chatContainer: HTMLElement | null = null;
   private inputContainer: HTMLElement | null = null;
   private selectContainer: HTMLDivElement | null = null;
   private apiKeyArea: HTMLTextAreaElement | null = null;
@@ -19,6 +12,8 @@ class OpenAICompletions {
   private gptContext: HTMLSelectElement | null = null;
   private clearHistory: HTMLButtonElement | null = null;
   private storage: Storage | null = null;
+  private codewars: Codewars | null = null;
+  private openaiModel: OpenAIModel | null = null;
 
   constructor() {
     document.addEventListener("DOMContentLoaded", () => {
@@ -38,7 +33,6 @@ class OpenAICompletions {
   private async init() {
     this.apiKeyContainer = document.getElementById("apikey-container")
     this.inputContainer = document.getElementById("input-container")
-    this.chatContainer = document.getElementById("chat-container")
     this.selectContainer = document.querySelector(".select-container") as HTMLDivElement
     this.apiKeyArea = document.querySelector(".apikey-area") as HTMLTextAreaElement
     this.inputTextArea = document.querySelector(".textarea-expand") as HTMLTextAreaElement
@@ -46,6 +40,8 @@ class OpenAICompletions {
     this.gptContext = document.querySelector("#gpt-context")
     this.clearHistory = document.querySelector("#clear-history")
     this.storage = new Storage()
+    this.codewars = new Codewars()
+    this.openaiModel = new OpenAIModel()
 
     this.storage.loadHistory()
     if (this.apiKeyArea) {
@@ -73,53 +69,12 @@ class OpenAICompletions {
     this.setContainer()
 
     if (this.inputTextArea) {
-      this.inputTextArea.addEventListener("keydown", (event) => this.handleChatGpt(event));
+      this.inputTextArea.addEventListener("keydown", (event) => this.openaiModel.handleChatGpt(event));
     }
 
     this.storage.loadSavedContext();
 
-    this.checkCodewarsTab()
-  }
-
-  private async checkCodewarsTab(): Promise<void> {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tab = tabs[0];
-      const codewarsOption = document.querySelector("#gpt-context option[value='codewars']") as HTMLOptionElement;
-  
-      if (tab && tab.url && tab.url.includes("codewars.com")) {
-        // Enable the codewars option if the current tab is on codewars.com
-        if (codewarsOption) {
-          codewarsOption.disabled = false;
-        }
-      } else {
-        // Disable the codewars option if the current tab is not on codewars.com
-        if (codewarsOption) {
-          codewarsOption.disabled = true;
-          this.gptContext.value = "assistant"
-        }
-      }
-    });
-  }
-
-  /**
-   * Appends a message to the chat container with the specified sender and text.
-   *
-   * @remarks
-   * This function creates a new div element, sets its class based on the sender,
-   * converts the text to HTML using the `markdownToHTML` function, and appends it to the chat container.
-   * It also scrolls the chat container to the bottom to show the new message.
-   *
-   * @param sender - The sender of the message. It can be either "user" or "bot".
-   * @param text - The text content of the message.
-   *
-   * @returns {void} - This function does not return any value.
-   */
-  private appendMessage(sender: "user" | "bot", text: string): void {
-    const messageDiv = document.createElement("div");
-    messageDiv.classList.add("message", sender === "user" ? "user-message" : "bot-message");
-    messageDiv.innerHTML = this.markdownToHTML(text);
-    this.chatContainer.appendChild(messageDiv);
-    this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+    this.codewars.checkCodewarsTab()
   }
 
   /**
@@ -141,88 +96,6 @@ class OpenAICompletions {
         this.apiKeyContainer.style.display = "none"
         this.inputContainer.style.display = "block"
         this.selectContainer.style.display = "flex"
-      }
-    }
-  }
-
-  /**
-   * Converts markdown text to HTML.
-   * 
-   * This function takes a string of markdown-formatted text and converts it to HTML.
-   * It handles code blocks, headers, inline code, bold text, italic text, and line breaks.
-   * 
-   * @param text - The markdown-formatted text to be converted to HTML.
-   * @returns The input text converted to HTML format.
-   */
-  private markdownToHTML(text: string): string {
-    const codeBlockPlaceholder = 'codeBlockPlaceholder';
-    const codeBlocks: string[] = [];
-    text = text.replace(/```([\s\S]+?)```/g, (match, p1) => {
-      codeBlocks.push(`<pre><code>${this.escapeHTML(p1)}</code></pre>`);
-      return codeBlockPlaceholder;
-    });
-
-    text = text
-      .replace(/### (.*?)(\n|$)/g, '<h3>$1</h3>') // H3 Headers
-      .replace(/## (.*?)(\n|$)/g, '<h2>$1</h2>')  // H2 Headers
-      .replace(/# (.*?)(\n|$)/g, '<h1>$1</h1>')   // H1 Headers
-      .replace(/`([^`]+)`/g, '<code>$1</code>') // Inline code
-      .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // Bold
-      .replace(/\*(.*?)\*/g, '<i>$1</i>') // Italic
-      .replace(/__(.*?)__/g, '<b>$1</b>') // Bold (alternative)
-      .replace(/_(.*?)_/g, '<i>$1</i>') // Italic (alternative)
-      .replace(/\n/g, "<br>"); // New lines
-
-    text = text.replace(new RegExp(codeBlockPlaceholder, 'g'), () => codeBlocks.shift() || '');
-
-    return text;
-  }
-
-   /**
-   * Escapes special characters in a string to prevent XSS attacks when rendering HTML.//+
-   * //+
-   * @param str - The input string that needs to be escaped.//+
-   * @returns A new string with special characters replaced by their HTML entity equivalents.//+
-   */
-  private escapeHTML(str: string): string {
-    return str.replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")
-              .replace(/"/g, "&quot;")
-              .replace(/'/g, "&#039;");
-  }
-
-  /**
-   * Handles the user input for chat messages and sends them to the OpenAI model for processing.
-   *
-   * @remarks
-   * This function is called when the user presses the Enter key while focused on the chat input area.
-   * It retrieves the user's input, validates it, and sends it to the OpenAI model for processing.
-   * If the OpenAI instance is not already initialized, it retrieves the API key from storage and initializes the instance.
-   * The function then adds a loading indicator to the input area, sends the user's message to the chatGpt function,
-   * appends the user's and bot's messages to the chat container, clears the input field, resets the input area's height,
-   * and saves the chat history to storage.
-   *
-   * @param event - The keyboard event that triggered this function.
-   * @returns {Promise<void>} - A promise that resolves when the chat handling process is complete.
-   */
-  private async handleChatGpt(event: KeyboardEvent) {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault()
-      const chatGptInput = this.inputTextArea?.value
-      if (chatGptInput && this.inputTextArea instanceof HTMLTextAreaElement) {
-        if (!this.openai) {
-          const apiKey = await this.storage.chromeStorageGet('key');
-          this.openai = await createOpenAI({
-            compatibility: "strict",
-            apiKey: apiKey,
-          })
-        }
-        this.appendMessage("user", chatGptInput)
-        this.inputTextArea.value = ""; // Clear input field
-        const res = await this.chatGpt(chatGptInput)
-        this.appendMessage("bot", res)
-        this.storage.saveHistory()
       }
     }
   }
@@ -252,110 +125,6 @@ class OpenAICompletions {
         this.selectContainer.style.display = "flex"
       }
     }
-  }
-
-  private async codewarsContent(textContent: string): Promise<string> {
-    return new Promise<string>( resolve => {
-      chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-        const tab = tabs[0]
-        if (tab.url?.includes('codewars.com')) {
-          chrome.scripting.executeScript({
-            target: { tabId: tab.id! },
-            func: () => {
-              const scrapeDescription = document.querySelectorAll("#description p, #description pre code")
-              const description = Array.from(scrapeDescription)
-                .map(line => line.textContent || "")
-                .join("\n")
-              
-              const programmingLanguage = document.querySelectorAll("span.mr-4 > span")
-              const language = Array.from(programmingLanguage)
-                .map(lang => lang.textContent || "")
-                .join("\n")
-              
-              const firstCode = document.querySelector(".CodeMirror-code")
-              const userCode = firstCode.querySelectorAll(".CodeMirror-line")
-              const code = Array.from(userCode)
-                .map(line => line.textContent || "")
-                .join("\n")
-  
-              return { description, language, code }
-            }
-          }, async result => {
-            if (result) {
-              const { description, language, code } = result[0]?.result
-              const prompt = codewarsPrompt
-                .replace(/{{problem_statement}}/g, description)
-                .replace(/{{programming_language}}/g, language)
-                .replace(/{{user_code}}/g, code)
-
-              const model = this.gptModel?.value || "gpt-4o-mini"
-
-              const data = await generateObject({
-                model: this.openai(model),
-                schema: outputSchema,
-                output: 'object',
-                messages: [
-                  { role: "system", content: prompt },
-                  { role: "system", content: `extractedCode (this code is written by user): ${code}`},
-                  { role: "user", content: textContent },
-                ],
-              })
-
-              const res = codewarsHints
-                .replace(/{{feedback}}/g, data.object.feedback)
-                .replace(/{{hint1}}/g, data.object.hints[0])
-                .replace(/{{hint2}}/g, data.object.hints[1])
-              
-              resolve(res)
-            }
-          })
-        } else {
-          resolve("You must access codewars problem to use this feature.")
-        }
-      })
-    })
-  }
-  
-  private async chatGpt(textContent: string): Promise<string> {
-    if (!this.openai) {
-      return "Error: OpenAI missing"
-    }
-
-    const model = this.gptModel?.value || "gpt-4o-mini"
-    const context = this.gptContext?.value || "assistant"
-    let content = ""
-    switch(context) {
-      case "assistant":
-        content = assistantPrompt
-        break
-      case "coding":
-        content = codingPrompt
-        break
-      case "codewars":
-        content = codewarsPrompt
-        break
-    }
-
-    let result = ""
-
-    if (context != "codewars") {
-      const {text} = await generateText({
-        model: this.openai(model),
-        messages: [
-          { role: "system", content: content },
-          {
-            role: "user",
-            content: textContent,
-          },
-        ],
-      })
-
-      result = text
-    } else {
-      result = await this.codewarsContent(textContent)
-    }
-
-    return result || "No response from openai"
   }
 }
 
