@@ -11,6 +11,7 @@ class OpenAICompletions {
   private gptModel: HTMLSelectElement | null = null;
   private gptContext: HTMLSelectElement | null = null;
   private clearHistory: HTMLButtonElement | null = null;
+  private closeModel: HTMLButtonElement | null = null;
   private storage: Storage | null = null;
   private codewars: Codewars | null = null;
   private openaiModel: OpenAIModel | null = null;
@@ -39,6 +40,7 @@ class OpenAICompletions {
     this.gptModel = document.querySelector("#gpt-model")
     this.gptContext = document.querySelector("#gpt-context")
     this.clearHistory = document.querySelector("#clear-history")
+    this.closeModel = document.querySelector("#close-model")
     this.storage = new Storage()
     this.codewars = new Codewars()
     this.openaiModel = new OpenAIModel()
@@ -50,6 +52,10 @@ class OpenAICompletions {
 
     if (this.clearHistory) {
       this.clearHistory.addEventListener("click", () =>  this.storage.clearHistoryFunc());
+    }
+
+    if (this.closeModel) {
+      this.closeModel.addEventListener("click", () => this.storage.closeModelFunc());
     }
 
     if (this.gptContext) {
