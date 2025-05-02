@@ -42,6 +42,12 @@ export class Storage {
     });
   }
 
+  public closeModelFunc(): void {
+    chrome.storage.local.remove('key', () => {
+      location.reload()
+    })
+  }
+
   /**
    * Loads the chat history from the Chrome local storage and appends it to the chat container.
    *
