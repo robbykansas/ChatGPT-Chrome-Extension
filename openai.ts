@@ -49,21 +49,23 @@ export class OpenAIModel {
         break
     }
   
-    let result = ""
-  
     if (context != "codewars") {
-      const {text} = await generateText({
-        model: this.openai(model),
-        messages: [
-          { role: "system", content: content },
-          {
-            role: "user",
-            content: textContent,
-          },
-        ],
-      })
-  
-      result = text
+      try {
+        const {text} = await generateText({
+          model: this.openai(model),
+          messages: [
+            { role: "system", content: content },
+            {
+              role: "user",
+              content: textContent,
+            },
+          ],
+        })
+    
+        return text
+      } catch (error) {
+        return "Unexpected error occurred. Please try again."
+      }
     } else {
       try {
         const { description, language, code } = await this.codewars?.codewarsContent()
@@ -133,6 +135,31 @@ export class OpenAIModel {
         appendMessage("bot", res)
         this.storage.saveHistory()
       }
+    }
+  }
+
+  public async validateApiKey(apikey: string): Promise<boolean> {
+    this.openai = await createOpenAI({
+      compatibility: "strict",
+      apiKey: apikey,
+    })
+
+    try {
+      await generateText({
+        model: this.openai("gpt-4o-mini"),
+        messages: [
+          { role: "system", content: assistantPrompt },
+          {
+            role: "user",
+            content: "test",
+          },
+        ],
+      })
+      console.log(">>>>> or this")
+      return true
+    } catch (error) {
+      console.log("<<<<<<< get this")
+      return false
     }
   }
 }
