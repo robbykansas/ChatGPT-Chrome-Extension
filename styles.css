@@ -36,6 +36,12 @@ body {
   display: block;
 }
 
+.apikey-message {
+  width: 100%;
+  display: block;
+  justify-content: center;
+}
+
 .chat-container {
   display: flex;
   flex-direction: column;
