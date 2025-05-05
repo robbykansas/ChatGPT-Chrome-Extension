@@ -6,6 +6,8 @@ class OpenAICompletions {
   private apiKeyContainer: HTMLElement | null = null;
   private inputContainer: HTMLElement | null = null;
   private selectContainer: HTMLDivElement | null = null;
+  private chatContainer: HTMLElement | null = null;
+  private apikeyMessage: HTMLParagraphElement | null = null;
   private apiKeyArea: HTMLTextAreaElement | null = null;
   private inputTextArea: HTMLTextAreaElement | null = null;
   private gptModel: HTMLSelectElement | null = null;
@@ -34,6 +36,8 @@ class OpenAICompletions {
   private async init() {
     this.apiKeyContainer = document.getElementById("apikey-container")
     this.inputContainer = document.getElementById("input-container")
+    this.chatContainer = document.getElementById("chat-container")
+    this.apikeyMessage = document.getElementById("apikey-message") as HTMLParagraphElement
     this.selectContainer = document.querySelector(".select-container") as HTMLDivElement
     this.apiKeyArea = document.querySelector(".apikey-area") as HTMLTextAreaElement
     this.inputTextArea = document.querySelector(".textarea-expand") as HTMLTextAreaElement
@@ -98,10 +102,13 @@ class OpenAICompletions {
     if (event.key === "Enter" && !event.shiftKey) {
       const apiKeyValue = this.apiKeyArea?.value
       if (apiKeyValue && this.apiKeyContainer instanceof HTMLElement && this.inputContainer instanceof HTMLElement) {
-        await this.storage.chromeStorageSet('key', apiKeyValue)
-        this.apiKeyContainer.style.display = "none"
-        this.inputContainer.style.display = "block"
-        this.selectContainer.style.display = "flex"
+        if (!await this.openaiModel.validateApiKey(apiKeyValue)) {
+          this.apikeyMessage.innerHTML = "Invalid API key."
+        } else {
+          console.log("Valid API key.")
+          await this.storage.chromeStorageSet('key', apiKeyValue)
+          location.reload()
+        }
       }
     }
   }
@@ -123,6 +130,7 @@ class OpenAICompletions {
         this.apiKeyContainer.style.display = "block"
         this.inputContainer.style.display = "none"
         this.selectContainer.style.display = "none"
+        this.chatContainer.style.display = "none"
       }
     } else {
       if (this.apiKeyContainer instanceof HTMLElement && this.inputContainer instanceof HTMLElement) {
