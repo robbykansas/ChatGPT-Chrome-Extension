@@ -31,8 +31,7 @@ export class Storage {
    * @returns {void} - This function does not return any value.
    */
   public saveHistory(): void {
-    let chatContainer = document.getElementById("chat-container")
-    chatContainer = document.getElementById("chat-container")
+    const chatContainer = document.getElementById("chat-container")
     chrome.storage.local.set({ chatHistory: chatContainer.innerHTML });
   }
 
@@ -80,12 +79,8 @@ export class Storage {
    *
    * @returns {Promise<void>} - A promise that resolves when the storage operation is complete.
    */
-  public async chromeStorageSet(key: string, value: string): Promise<void> {
-    return new Promise<void>(resolve => {
-      chrome.storage.local.set({[key]: value}, () => {
-        resolve()
-      })
-    })
+  public chromeStorageSet(key: string, value: string): void {
+    chrome.storage.local.set({[key]: value})
   };
 
   /**
@@ -100,11 +95,9 @@ export class Storage {
    *
    * @returns {Promise<string>} - A promise that resolves with the retrieved value.
    */
-  public async chromeStorageGet(key: string): Promise<string> {
-    return new Promise<string>(resolve => {
-      chrome.storage.local.get(key, result => {
-        resolve(result.key)
-      })
+  public chromeStorageGet(key: string): any {
+    chrome.storage.local.get(key, result => {
+      return result.key
     })
   }
 }
