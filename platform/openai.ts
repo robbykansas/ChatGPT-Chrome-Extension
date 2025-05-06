@@ -1,11 +1,11 @@
-import { assistantPrompt } from "./constant/assistantPrompt";
-import { codingPrompt } from "./constant/codingPrompts";
-import { codewarsPrompt } from "./constant/codewarsPrompts";
-import { codewarsHints } from "./constant/codewarsHints";
-import { outputSchema } from "./schema/output";
-import { Codewars } from "./codewars";
-import { Storage } from "./storage";
-import { appendMessage } from "./util/appendMessage";
+import { assistantPrompt } from "../constant/assistantPrompt";
+import { codingPrompt } from "../constant/codingPrompts";
+import { codewarsPrompt } from "../constant/codewarsPrompts";
+import { codewarsHints } from "../constant/codewarsHints";
+import { outputSchema } from "../schema/output";
+import { Codewars } from "../codewars";
+import { Storage } from "../storage";
+import { appendMessage } from "../util/appendMessage";
 import { createOpenAI, OpenAIProvider } from "@ai-sdk/openai";
 import { generateText, generateObject } from "ai";
 
@@ -155,10 +155,8 @@ export class OpenAIModel {
           },
         ],
       })
-      console.log(">>>>> or this")
       return true
     } catch (error) {
-      console.log("<<<<<<< get this")
       return false
     }
   }
