@@ -9,7 +9,11 @@
 </head>
 <body>
     <div id="apikey-container">
-        <input type="password" class="apikey-area" placeholder="Enter OpenAi api key here..." >
+        <select id="ai-platform" class="ai-platform">
+            <option value="openai" selected>OpenAI</option>
+            <option value="anthropic">Anthropic</option>
+        </select>
+        <input type="password" class="apikey-area" placeholder="Enter your API Key here ..." >
         <p id="apikey-message" class="apikey-message"></p>
     </div>
     <div id="chat-container"></div>
