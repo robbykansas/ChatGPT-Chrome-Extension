@@ -39,7 +39,8 @@ body {
 .apikey-message {
   width: 100%;
   display: block;
-  justify-content: center;
+  text-align: center;
+  margin-top: 5px;
 }
 
 .chat-container {
@@ -143,6 +144,20 @@ body {
 }
 
 .select-container select {
+  width: 100%;
+  min-height: 15px; /* Start small */
+  padding: 10px;
+  font-size: 14px;
+  border: 2px solid rgba(0, 0, 0, 0.7);
+  border-radius: 6px;
+  line-height: 1.5;
+  transition: border-color 0.2s ease-in-out;
+  background-size: 16px 16px;
+}
+
+.ai-platform {
+  display: flex;
+  margin-bottom: 10px;
   width: 100%;
   min-height: 15px; /* Start small */
   padding: 10px;
