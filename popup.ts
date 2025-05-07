@@ -1,6 +1,7 @@
 import { Storage } from "./storage";
 import { Codewars } from "./codewars";
-import { OpenAIModel } from "./openai";
+import { OpenAIModel } from "./platform/openai";
+import { AnthropicModel } from "./platform/anthropic";
 
 class OpenAICompletions {
   private apiKeyContainer: HTMLElement | null = null;
@@ -10,6 +11,7 @@ class OpenAICompletions {
   private apikeyMessage: HTMLParagraphElement | null = null;
   private apiKeyArea: HTMLTextAreaElement | null = null;
   private inputTextArea: HTMLTextAreaElement | null = null;
+  private aiPlatform: HTMLSelectElement | null = null;
   private gptModel: HTMLSelectElement | null = null;
   private gptContext: HTMLSelectElement | null = null;
   private clearHistory: HTMLButtonElement | null = null;
@@ -17,6 +19,7 @@ class OpenAICompletions {
   private storage: Storage | null = null;
   private codewars: Codewars | null = null;
   private openaiModel: OpenAIModel | null = null;
+  private anthropicModel: AnthropicModel | null = null;
 
   constructor() {
     document.addEventListener("DOMContentLoaded", () => {
@@ -43,15 +46,17 @@ class OpenAICompletions {
     this.inputTextArea = document.querySelector(".textarea-expand") as HTMLTextAreaElement
     this.gptModel = document.querySelector("#gpt-model")
     this.gptContext = document.querySelector("#gpt-context")
+    this.aiPlatform = document.querySelector("#ai-platform")
     this.clearHistory = document.querySelector("#clear-history")
     this.closeModel = document.querySelector("#close-model")
     this.storage = new Storage()
     this.codewars = new Codewars()
     this.openaiModel = new OpenAIModel()
+    this.anthropicModel = new AnthropicModel()
 
     this.storage.loadHistory()
     if (this.apiKeyArea) {
-      this.apiKeyArea.addEventListener("keydown", (event) => this.handleApiKey(event))
+      this.apiKeyArea.addEventListener("keydown", async (event) => await this.handleApiKey(event))
     }
 
     if (this.clearHistory) {
@@ -76,7 +81,9 @@ class OpenAICompletions {
       })
     }
 
-    this.setContainer()
+    await this.setContainer()
+
+    await this.setModelOptions()
 
     if (this.inputTextArea) {
       this.inputTextArea.addEventListener("keydown", (event) => this.openaiModel.handleChatGpt(event));
@@ -102,10 +109,21 @@ class OpenAICompletions {
     if (event.key === "Enter" && !event.shiftKey) {
       const apiKeyValue = this.apiKeyArea?.value
       if (apiKeyValue && this.apiKeyContainer instanceof HTMLElement && this.inputContainer instanceof HTMLElement) {
-        if (!await this.openaiModel.validateApiKey(apiKeyValue)) {
+        let valid = false
+        switch (this.aiPlatform?.value) {
+          case "openai":
+            valid = await this.openaiModel.validateApiKey(apiKeyValue)
+            break;
+          case "anthropic":
+            valid = await this.anthropicModel.validateAnthropicKey(apiKeyValue)
+            break;
+        }
+
+        if (!valid) {
           this.apikeyMessage.innerHTML = "Invalid API key."
         } else {
-          console.log("Valid API key.")
+          const platform = this.aiPlatform?.value
+          await this.storage.chromeStorageSet('platform', platform)
           await this.storage.chromeStorageSet('key', apiKeyValue)
           location.reload()
         }
@@ -138,6 +156,46 @@ class OpenAICompletions {
         this.inputContainer.style.display = "block"
         this.selectContainer.style.display = "flex"
       }
+    }
+  }
+
+  private async setModelOptions() {
+    const platform = await this.storage.chromeStorageGet('platform')
+    if (!this.gptModel) return
+
+    const openAiModel = [
+      { value: "gpt-4o-mini", label: "GPT-4o-mini" },
+      { value: "gpt-4o", label: "GPT-4o" },
+    ]
+
+    const anthropicModel = [
+      { value: "claude-3-haiku-20240307", label: "Claude 3 Haiku" },
+      { value: "claude-3-opus-20240229", label: "Claude 3 Opus" },
+      { value: "claude-3-sonnet-20240229", label: "Claude 3 Sonnet" },
+      { value: "claude-3-5-haiku-latest", label: "Claude 3.5 Haiku" },
+      { value: "claude-3-5-sonnet-latest", label: "Claude 3.5 Sonnet" },
+      { value: "claude-3-7-sonnet-20250219", label: "Claude 3.7 Sonnet" },
+    ]
+
+    switch (platform) {
+      case "openai":
+        openAiModel.forEach(model => {
+          const option = document.createElement("option")
+          option.value = model.value
+          option.textContent = model.label
+          this.gptModel.appendChild(option)
+        })
+        this.gptModel.value = "gpt-4o-mini"
+        return
+      case "anthropic":
+        anthropicModel.forEach(model => {
+          const option = document.createElement("option")
+          option.value = model.value
+          option.textContent = model.label
+          this.gptModel.appendChild(option)
+        })
+        this.gptModel.value = "claude-3-haiku-20240307"
+        return
     }
   }
 }
