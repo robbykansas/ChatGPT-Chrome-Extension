@@ -79,8 +79,12 @@ export class Storage {
    *
    * @returns {Promise<void>} - A promise that resolves when the storage operation is complete.
    */
-  public chromeStorageSet(key: string, value: string): void {
-    chrome.storage.local.set({[key]: value})
+  public async chromeStorageSet(key: string, value: string): Promise<void> {
+    return new Promise<void>(resolve => {
+      chrome.storage.local.set({[key]: value}, () => {
+        resolve()
+      })
+    })
   };
 
   /**
@@ -95,9 +99,11 @@ export class Storage {
    *
    * @returns {Promise<string>} - A promise that resolves with the retrieved value.
    */
-  public chromeStorageGet(key: string): any {
-    chrome.storage.local.get(key, result => {
-      return result.key
+  public async chromeStorageGet(key: string): Promise<string> {
+    return new Promise<string>(resolve => {
+      chrome.storage.local.get(key, result => {
+        resolve(result[key])
+      })
     })
   }
 }
