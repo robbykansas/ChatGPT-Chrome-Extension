@@ -85,13 +85,23 @@ class OpenAICompletions {
 
     await this.setModelOptions()
 
-    if (this.inputTextArea) {
-      this.inputTextArea.addEventListener("keydown", (event) => this.openaiModel.handleChatGpt(event));
-    }
-
     this.storage.loadSavedContext();
 
     this.codewars.checkCodewarsTab()
+
+    if (this.inputTextArea) {
+      this.inputTextArea.addEventListener("keydown", async (event) => {
+        const platform = await this.storage.chromeStorageGet('platform')
+        switch (platform) {
+          case "openai":
+            await this.openaiModel.handleChatGpt(event)
+            break;
+          case "anthropic":
+            await this.anthropicModel.handleChatGpt(event)
+            break;
+        }
+      });
+    }
   }
 
   /**
