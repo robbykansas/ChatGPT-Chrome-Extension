@@ -1,6 +1,19 @@
-export const codewarsHints = `
+const codewarsFeedback = `
 Feedback: {{feedback}} <br>
+{{hints}} <br>
+{{snippet}} <br>
+{{language}}
+`
+
+const hints = `
 Hints: <br>
 - {{hint1}} <br>
-- {{hint2}}
-`
+- {{hint2}}`
+
+const snippet = `
+Snippet: {{snippet}}`
+
+const language = `
+Language: {{programming_language}}`
+
+export { codewarsFeedback, hints, snippet, language }
