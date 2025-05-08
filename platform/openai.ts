@@ -1,11 +1,9 @@
-import { assistantPrompt } from "../constant/assistantPrompt";
-import { codingPrompt } from "../constant/codingPrompts";
-import { codewarsPrompt } from "../constant/codewarsPrompts";
-import { codewarsHints } from "../constant/codewarsHints";
+import { codewarsFeedback, hints, snippet, language } from "../constant/codewarsHints";
 import { outputSchema } from "../schema/output";
 import { Codewars } from "../codewars";
 import { Storage } from "../storage";
 import { appendMessage } from "../util/appendMessage";
+import { getContent } from "../util/getContent";
 import { createOpenAI, OpenAIProvider } from "@ai-sdk/openai";
 import { generateText, generateObject } from "ai";
 
@@ -36,18 +34,7 @@ export class OpenAIModel {
   
     const model = this.gptModel?.value || "gpt-4o-mini"
     const context = this.gptContext?.value || "assistant"
-    let content = ""
-    switch(context) {
-      case "assistant":
-        content = assistantPrompt
-        break
-      case "coding":
-        content = codingPrompt
-        break
-      case "codewars":
-        content = codewarsPrompt
-        break
-    }
+    let content = getContent(context)
   
     if (context != "codewars") {
       try {
@@ -69,7 +56,7 @@ export class OpenAIModel {
     } else {
       try {
         const { description, language, code } = await this.codewars?.codewarsContent()
-        const prompt = codewarsPrompt
+        const prompt = content
           .replace(/{{problem_statement}}/g, description)
           .replace(/{{programming_language}}/g, language)
           .replace(/{{user_code}}/g, code)
@@ -95,10 +82,24 @@ export class OpenAIModel {
       ],
     })
 
-    const res = codewarsHints
-      .replace(/{{feedback}}/g, data.object.feedback)
+    let cHints, cSnippet, cLanguage = ""
+    if (data.object.hints.length > 0) {
+      cHints = hints
       .replace(/{{hint1}}/g, data.object.hints[0])
       .replace(/{{hint2}}/g, data.object.hints[1])
+    }
+
+    if (data.object.snippet != "") {
+      cSnippet = snippet.replace(/{{snippet}}/g, data.object.snippet)
+    }
+
+    cLanguage = language.replace(/{{programming_language}}/g, data.object.programmingLanguage)
+
+    const res = codewarsFeedback
+      .replace(/{{feedback}}/g, data.object.feedback)
+      .replace(/{{hints}}/g, cHints)
+      .replace(/{{snippet}}/g, cSnippet)
+      .replace(/{{language}}/g, cLanguage)
 
     return res
   }
@@ -148,7 +149,7 @@ export class OpenAIModel {
       await generateText({
         model: this.openai("gpt-4o-mini"),
         messages: [
-          { role: "system", content: assistantPrompt },
+          { role: "system", content: getContent("assistant") },
           {
             role: "user",
             content: "test",
