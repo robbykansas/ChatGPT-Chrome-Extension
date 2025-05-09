@@ -25,7 +25,7 @@ export class OpenAIModel {
 
   public async chatGpt(textContent: string): Promise<string> {
     if (!this.openai) {
-      const apiKey = await this.storage.chromeStorageGet('key');
+      const apiKey = await this.storage.chromeStorageGet<string>('key');
       this.openai = await createOpenAI({
         compatibility: "strict",
         apiKey: apiKey,
@@ -124,7 +124,7 @@ export class OpenAIModel {
       const chatGptInput = this.inputTextArea?.value
       if (chatGptInput && this.inputTextArea instanceof HTMLTextAreaElement) {
         if (!this.openai) {
-          const apiKey = await this.storage.chromeStorageGet('key');
+          const apiKey = await this.storage.chromeStorageGet<string>('key');
           this.openai = await createOpenAI({
             compatibility: "strict",
             apiKey: apiKey,
