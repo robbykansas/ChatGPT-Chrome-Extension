@@ -1,3 +1,5 @@
+import { GptMessage } from "./schema/model";
+
 export class Storage {
   public loadSavedContext(): void {
     let gptContext: HTMLSelectElement | null = null;
@@ -67,19 +69,7 @@ export class Storage {
     });
   }
 
-  /**
-   * Sets a value in the Chrome local storage using the provided key and value.
-   *
-   * @remarks
-   * This function uses the `chrome.storage.local.set` method to store the provided key-value pair in the Chrome local storage.
-   * It returns a promise that resolves when the storage operation is complete.
-   *
-   * @param key - The key under which the value will be stored in the Chrome local storage.
-   * @param value - The value to be stored in the Chrome local storage.
-   *
-   * @returns {Promise<void>} - A promise that resolves when the storage operation is complete.
-   */
-  public async chromeStorageSet(key: string, value: string): Promise<void> {
+  public async chromeStorageSet<T>(key: string, value: T): Promise<void> {
     return new Promise<void>(resolve => {
       chrome.storage.local.set({[key]: value}, () => {
         resolve()
@@ -87,24 +77,18 @@ export class Storage {
     })
   };
 
-  /**
-   * Retrieves a value from the Chrome local storage using the provided key.
-   *
-   * @remarks
-   * This function uses the `chrome.storage.local.get` method to retrieve the value associated with the given key from the Chrome local storage.
-   * It returns a promise that resolves with the retrieved value.
-   * If the specified key is not found in the local storage, the promise will resolve with `undefined`.
-   *
-   * @param key - The key under which the value is stored in the Chrome local storage.
-   *
-   * @returns {Promise<string>} - A promise that resolves with the retrieved value.
-   */
-  public async chromeStorageGet(key: string): Promise<string> {
-    return new Promise<string>(resolve => {
+  public async chromeStorageGet<T>(key: string): Promise<T | undefined> {
+    return new Promise<T | undefined>(resolve => {
       chrome.storage.local.get(key, result => {
         resolve(result[key])
       })
     })
+  }
+
+  public async storeMessage(message: GptMessage): Promise<void> {
+    const messages = await this.chromeStorageGet<GptMessage[]>("messages") || [];
+    messages.push(message)
+    await this.chromeStorageSet("messages", messages)
   }
 }
 
