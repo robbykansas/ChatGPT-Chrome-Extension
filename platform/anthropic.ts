@@ -90,15 +90,6 @@ export class AnthropicModel {
     const model = this.gptModel?.value
     const storedMessages = await this.storage.chromeStorageGet<GptMessage[]>("messages") || [];
     try {
-      console.log([
-        { role: "system", content: prompt },
-        ...storedMessages,
-        {
-          role: "user",
-          content: textContent,
-        },
-      ], "<<<<<<<<<< this")
-
       const data = await generateObject({
         model: this.anthropic(model),
         schema: outputSchema,
@@ -155,7 +146,7 @@ export class AnthropicModel {
         .replace(/{{hint2}}/g, hint[1])
 
         cSnippet = snippet.replace(/{{snippet}}/g, parsedText.snippet)
-        cLanguage = language.replace(/{{programming_language}}/g, parsedText.programming_language)
+        cLanguage = language.replace(/{{programming_language}}/g, parsedText.programmingLanguage)
 
         const res = codewarsFeedback
         .replace(/{{feedback}}/g, parsedText.feedback)
