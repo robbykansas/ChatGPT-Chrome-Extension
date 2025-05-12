@@ -1,4 +1,5 @@
 import { codewarsFeedback, hints, snippet, language } from "../constant/codewarsHints";
+import { GptMessage } from "../schema/model";
 import { outputSchema } from "../schema/output";
 import { Codewars } from "../codewars";
 import { Storage } from "../storage";
@@ -35,6 +36,7 @@ export class OpenAIModel {
     const model = this.gptModel?.value || "gpt-4o-mini"
     const context = this.gptContext?.value || "assistant"
     let content = getContent(context)
+    const storedMessages = await this.storage.chromeStorageGet<GptMessage[]>("messages") || [];
   
     if (context != "codewars") {
       try {
@@ -42,6 +44,7 @@ export class OpenAIModel {
           model: this.openai(model),
           messages: [
             { role: "system", content: content },
+            ...storedMessages,
             {
               role: "user",
               content: textContent,
@@ -71,6 +74,7 @@ export class OpenAIModel {
 
   public async generateOutputCodewars(prompt: string, textContent: string, code: string): Promise<string> {
     const model = this.gptModel?.value
+    const storedMessages = await this.storage.chromeStorageGet<GptMessage[]>("messages") || [];
     const data = await generateObject({
       model: this.openai(model),
       schema: outputSchema,
@@ -78,6 +82,7 @@ export class OpenAIModel {
       messages: [
         { role: "system", content: prompt },
         { role: "system", content: `extractedCode (this code is written by user): ${code}`},
+        ...storedMessages,
         { role: "user", content: textContent },
       ],
     })
