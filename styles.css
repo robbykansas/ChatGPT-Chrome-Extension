@@ -170,12 +170,15 @@ body {
 }
 
 pre {
+  width: 100%;
   background: black;
   padding: 10px;
   border-radius: 6px;
   overflow-x: auto; /* Allow horizontal scrolling */
   white-space: pre-wrap; /* Wrap long lines */
   word-wrap: break-word; /* Break long words */
+  word-break: break-word;
+  color: white;
 }
 
 code {
