@@ -11,7 +11,7 @@ Hints: <br>
 - {{hint2}}`
 
 const snippet = `
-Snippet: {{snippet}}`
+Snippet: <pre><code>{{snippet}}</code></pre>`
 
 const language = `
 Language: {{programming_language}}`
