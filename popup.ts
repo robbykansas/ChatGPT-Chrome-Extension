@@ -176,12 +176,14 @@ class OpenAICompletions {
     const openAiModel = [
       { value: "gpt-4o-mini", label: "GPT-4o-mini" },
       { value: "gpt-4o", label: "GPT-4o" },
+      { value: "gpt-4.1-nano", label: "GPT-4.1-nano"},
+      { value: "gpt-4.1-mini", label: "GPT-4.1-mini"},
+      { value: "gpt-4.1", label: "GPT-4.1" },
     ]
 
     const anthropicModel = [
       { value: "claude-3-haiku-20240307", label: "Claude 3 Haiku" },
       { value: "claude-3-opus-20240229", label: "Claude 3 Opus" },
-      { value: "claude-3-sonnet-20240229", label: "Claude 3 Sonnet" },
       { value: "claude-3-5-haiku-latest", label: "Claude 3.5 Haiku" },
       { value: "claude-3-5-sonnet-latest", label: "Claude 3.5 Sonnet" },
       { value: "claude-3-7-sonnet-20250219", label: "Claude 3.7 Sonnet" },
