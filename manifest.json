@@ -1,8 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "ChatGpt Chrome Extension",
-  "description": "Chat completion extension for chrome extension",
+  "name": "Codewars Helper + ChatGPT",
+  "description": "A Chrome extension that helps you solve Codewars challenges with ChatGPT",
   "version": "1.0",
+  "icons": {
+    "16": "logo/logo-16.png",
+    "48": "logo/logo-48.png",
+    "128": "logo/logo-128.png"
+  },
   "permissions": [
     "storage",
     "activeTab",
