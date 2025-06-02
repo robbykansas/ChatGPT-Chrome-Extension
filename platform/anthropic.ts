@@ -33,7 +33,7 @@ export class AnthropicModel {
       })
     }
 
-    const model = this.gptModel?.value || "gpt-4o-mini"
+    const model = this.gptModel?.value
     const context = this.gptContext?.value || "assistant"
     let content = getContent(context)
     const storedMessages = await this.storage.chromeStorageGet<GptMessage[]>("messages") || [];
