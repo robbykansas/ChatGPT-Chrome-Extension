@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Codewars Helper + ChatGPT",
   "description": "A Chrome extension that helps you solve Codewars challenges with ChatGPT",
-  "version": "1.0",
+  "version": "1.1",
   "icons": {
     "16": "logo/logo-16.png",
     "48": "logo/logo-48.png",
