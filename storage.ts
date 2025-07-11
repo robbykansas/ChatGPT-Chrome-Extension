@@ -38,6 +38,8 @@ export class Storage {
   }
 
   public clearHistoryFunc(): void {
+    chrome.storage.local.remove('messages')
+    
     chrome.storage.local.remove('chatHistory', () => {
       location.reload()
     });
