@@ -17,6 +17,22 @@ export class NanoGPTModel {
     this.storage = new Storage();
   }
 
+  public async getModel(): Promise<Array<string>> {
+    const apiKey = await this.storage.chromeStorageGet<string>('key');
+
+    const response = await fetch("https://nano-gpt.com/api/subscription/v1/models", {
+      headers: {
+        "Authorization": `Bearer ${apiKey}`
+      }
+    })
+
+    const data = await response.json();
+    return data.data.map((model: { id: string; name: string }) => ({
+      value: model.id,
+      label: model.name
+    }))
+  }
+
   // public async chatGpt(textContent: string): Promise<string> {
   //   const model = this.gptModel?.value || "zai-org/glm-5:thinking";
   // }
