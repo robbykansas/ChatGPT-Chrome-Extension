@@ -7,14 +7,15 @@ import { appendMessage } from "../util/appendMessage";
 import { getContent } from "../util/getContent";
 import { createAnthropic, AnthropicProvider } from "@ai-sdk/anthropic";
 import { generateText, generateObject, NoObjectGeneratedError } from "ai";
+import { error } from "console";
 
 export class AnthropicModel {
   private anthropic: AnthropicProvider | null = null;
   private gptModel: HTMLSelectElement | null = null;
   private gptContext: HTMLSelectElement | null = null;
   private inputTextArea: HTMLTextAreaElement | null = null;
-  private codewars: Codewars | null = null;
-  private storage: Storage | null = null;
+  private codewars: Codewars;
+  private storage!: Storage;
 
   constructor() {
     this.gptModel = document.querySelector("#gpt-model")
@@ -33,7 +34,7 @@ export class AnthropicModel {
       })
     }
 
-    const model = this.gptModel?.value
+    const model = this.gptModel?.value || "claude-3-haiku-20240307"
     const context = this.gptContext?.value || "assistant"
     let content = getContent(context)
     const storedMessages = await this.storage.chromeStorageGet<GptMessage[]>("messages") || [];
@@ -41,7 +42,7 @@ export class AnthropicModel {
     if (context != "codewars") {
       try {
         const {text} = await generateText({
-          model: this.anthropic(model),
+          model: this.anthropic!(model),
           messages: [
             { role: "system", content: content },
             ...storedMessages,
@@ -81,17 +82,20 @@ export class AnthropicModel {
         
         return res
       } catch (error) {
-        return error
+        if (error instanceof Error) {
+          return error.message
+        }
+        return "Unexpected error occurred. Please try again."
       }
     }
   }
 
   private async generateOutputCodewars(prompt: string, textContent: string, code: string): Promise<string> {
-    const model = this.gptModel?.value
+    const model = this.gptModel?.value || "claude-3-haiku-20240307"
     const storedMessages = await this.storage.chromeStorageGet<GptMessage[]>("messages") || [];
     try {
       const data = await generateObject({
-        model: this.anthropic(model),
+        model: this.anthropic!(model),
         schema: outputSchema,
         output: 'object',
         messages: [
@@ -103,22 +107,22 @@ export class AnthropicModel {
       })
       
       let cHints, cSnippet, cLanguage = ""
-      if (data.object.hints.length > 0) {
+      if (data.object.hints!.length > 0) {
         cHints = hints
-        .replace(/{{hint1}}/g, data.object.hints[0])
-        .replace(/{{hint2}}/g, data.object.hints[1])
+        .replace(/{{hint1}}/g, data.object.hints![0])
+        .replace(/{{hint2}}/g, data.object.hints![1])
       }
   
       if (data.object.snippet != "") {
-        cSnippet = snippet.replace(/{{snippet}}/g, data.object.snippet)
+        cSnippet = snippet.replace(/{{snippet}}/g, data.object.snippet!)
       }
   
-      cLanguage = language.replace(/{{programming_language}}/g, data.object.programmingLanguage)
+      cLanguage = language.replace(/{{programming_language}}/g, data.object.programmingLanguage!)
   
       const res = codewarsFeedback
         .replace(/{{feedback}}/g, data.object.feedback)
-        .replace(/{{hints}}/g, cHints)
-        .replace(/{{snippet}}/g, cSnippet)
+        .replace(/{{hints}}/g, cHints!)
+        .replace(/{{snippet}}/g, cSnippet!)
         .replace(/{{language}}/g, cLanguage)
   
       const saveUserMessage: GptMessage = {
@@ -138,15 +142,15 @@ export class AnthropicModel {
     } catch (error) {
       if (NoObjectGeneratedError.isInstance(error)) {
         let cHints, cSnippet, cLanguage = ""
-        const parsedText = JSON.parse(error.text)
-        const hint = parsedText.hints.split("\n").map((hint) => hint.trim());
+        const parsedText = JSON.parse(error.text!)
+        const hint = parsedText.hints.split("\n").map((hint: string) => hint.trim());
 
         cHints = hints
         .replace(/{{hint1}}/g, hint[0])
         .replace(/{{hint2}}/g, hint[1])
 
-        cSnippet = snippet.replace(/{{snippet}}/g, parsedText.snippet)
-        cLanguage = language.replace(/{{programming_language}}/g, parsedText.programmingLanguage)
+        cSnippet = snippet.replace(/{{snippet}}/g, parsedText.snippet!)
+        cLanguage = language.replace(/{{programming_language}}/g, parsedText.programmingLanguage!)
 
         const res = codewarsFeedback
         .replace(/{{feedback}}/g, parsedText.feedback)
@@ -169,6 +173,7 @@ export class AnthropicModel {
 
         return res
       }
+      throw error
     }
   }
 
@@ -201,7 +206,7 @@ export class AnthropicModel {
 
     try {
       await generateText({
-        model: this.anthropic("claude-3-haiku-20240307"),
+        model: this.anthropic!("claude-3-haiku-20240307"),
         messages: [
           { role: "system", content: getContent("assistant") },
           {
