@@ -13,8 +13,8 @@ export class OpenAIModel {
   private gptModel: HTMLSelectElement | null = null;
   private gptContext: HTMLSelectElement | null = null;
   private inputTextArea: HTMLTextAreaElement | null = null;
-  private codewars: Codewars | null = null;
-  private storage: Storage | null = null;
+  private codewars: Codewars
+  private storage: Storage
 
   constructor() {
     this.gptModel = document.querySelector("#gpt-model")
@@ -67,16 +67,19 @@ export class OpenAIModel {
         const res = await this.generateOutputCodewars(prompt, textContent, code)
         return res
       } catch (error) {
-        return error
+        if (error instanceof Error) {
+          return error.message
+        }
+        return "Unexpected error occurred. Please try again."
       }
     }
   }
 
   public async generateOutputCodewars(prompt: string, textContent: string, code: string): Promise<string> {
-    const model = this.gptModel?.value
+    const model = this.gptModel?.value || "gpt-4o-mini"
     const storedMessages = await this.storage.chromeStorageGet<GptMessage[]>("messages") || [];
     const data = await generateObject({
-      model: this.openai(model),
+      model: this.openai!(model),
       schema: outputSchema,
       output: 'object',
       messages: [
@@ -88,22 +91,22 @@ export class OpenAIModel {
     })
 
     let cHints, cSnippet, cLanguage = ""
-    if (data.object.hints.length > 0) {
+    if (data.object.hints!.length > 0) {
       cHints = hints
-      .replace(/{{hint1}}/g, data.object.hints[0])
-      .replace(/{{hint2}}/g, data.object.hints[1])
+      .replace(/{{hint1}}/g, data.object.hints![0])
+      .replace(/{{hint2}}/g, data.object.hints![1])
     }
 
     if (data.object.snippet != "") {
-      cSnippet = snippet.replace(/{{snippet}}/g, data.object.snippet)
+      cSnippet = snippet.replace(/{{snippet}}/g, data.object.snippet!)
     }
 
-    cLanguage = language.replace(/{{programming_language}}/g, data.object.programmingLanguage)
+    cLanguage = language.replace(/{{programming_language}}/g, data.object.programmingLanguage!)
 
     const res = codewarsFeedback
       .replace(/{{feedback}}/g, data.object.feedback)
-      .replace(/{{hints}}/g, cHints)
-      .replace(/{{snippet}}/g, cSnippet)
+      .replace(/{{hints}}/g, cHints!)
+      .replace(/{{snippet}}/g, cSnippet!)
       .replace(/{{language}}/g, cLanguage)
 
     return res
