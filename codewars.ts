@@ -1,3 +1,5 @@
+/// <reference types="chrome"/>
+
 export class Codewars {
   private gptContext: HTMLSelectElement | null = null;
 
