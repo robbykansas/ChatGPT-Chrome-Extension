@@ -20,7 +20,7 @@ export class Codewars {
         // Disable the codewars option if the current tab is not on codewars.com
         if (codewarsOption) {
           codewarsOption.disabled = true;
-          this.gptContext.value = "assistant"
+          this.gptContext!.value = "assistant"
         }
       }
     });
@@ -45,7 +45,7 @@ export class Codewars {
                 .join("\n")
               
               const firstCode = document.querySelector(".CodeMirror-code")
-              const userCode = firstCode.querySelectorAll(".CodeMirror-line")
+              const userCode = firstCode!.querySelectorAll(".CodeMirror-line")
               const code = Array.from(userCode)
                 .map(line => line.textContent || "")
                 .join("\n")
